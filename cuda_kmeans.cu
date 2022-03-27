@@ -183,6 +183,12 @@ void compute_delta(int *deviceIntermediates,
     }
 }
 
+inline float inlineCheckCuda(int *deviceArr) {
+    int d;
+    checkCuda(cudaMemcpy(&d, deviceArr, sizeof(int), cudaMemcpyDeviceToHost));
+    return (float)d;
+}
+        
 /*----< cuda_kmeans() >-------------------------------------------------------*/
 //
 //  ----------------------------------------
@@ -287,12 +293,15 @@ float** cuda_kmeans(float **objects,      /* in: [numObjs][numCoords] */
         compute_delta <<< 1, numReductionThreads, reductionBlockSharedDataSize >>>
             (deviceIntermediates, numClusterBlocks, numReductionThreads);
 
-	cudaDeviceSynchronize(); checkLastCudaError();
+	    cudaDeviceSynchronize(); checkLastCudaError();
 
-        int d;
-        checkCuda(cudaMemcpy(&d, deviceIntermediates,
-                  sizeof(int), cudaMemcpyDeviceToHost));
-        delta = (float)d;
+        delta = inlineCheckCuda(deviceIntermediates);
+
+        // int d;
+        // checkCuda(cudaMemcpy(&d, deviceIntermediates,
+        //           sizeof(int), cudaMemcpyDeviceToHost));
+        // delta = (float)d;
+        
 
         checkCuda(cudaMemcpy(membership, deviceMembership,
                   numObjs*sizeof(int), cudaMemcpyDeviceToHost));
