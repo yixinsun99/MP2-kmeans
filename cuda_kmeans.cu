@@ -95,8 +95,8 @@ void find_nearest_cluster(int numCoords,
     //  The type chosen for membershipChanged must be large enough to support
     //  reductions! There are blockDim.x elements, one for each thread in the
     //  block.
-    unsigned char *membershipChanged = (unsigned char *)sharedMemory;
-    float *clusters = (float *)(sharedMemory + blockDim.x);
+    unsigned int *membershipChanged = (unsigned int *)sharedMemory;
+    float *clusters = (float *)(sharedMemory + blockDim.x*sizeof(unsigned int));
 
     membershipChanged[threadIdx.x] = 0;
 
@@ -251,11 +251,11 @@ float** cuda_kmeans(float **objects,      /* in: [numObjs][numCoords] */
     //  two, and it *must* be no larger than the number of bits that will
     //  fit into an unsigned char, the type used to keep track of membership
     //  changes in the kernel.
-    const unsigned int numThreadsPerClusterBlock = 128;
+    const unsigned int numThreadsPerClusterBlock = 512;
     const unsigned int numClusterBlocks =
         (numObjs + numThreadsPerClusterBlock - 1) / numThreadsPerClusterBlock;
     const unsigned int clusterBlockSharedDataSize =
-        numThreadsPerClusterBlock * sizeof(unsigned char) +
+        numThreadsPerClusterBlock * sizeof(unsigned int) +
         numClusters * numCoords * sizeof(float);
 
     const unsigned int numReductionThreads =
